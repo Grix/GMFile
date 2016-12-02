@@ -1,19 +1,26 @@
-cmake_minimum_required (VERSION 3.7)
+cmake_minimum_required (VERSION 3.5)
 
-option (NFD_WIN 
-        "Build nfd for windows api (otherwise gtk)" ON) 
-
-set(CMAKE_CXX_FLAGS_RELEASE "/MT")
-set(CMAKE_C_FLAGS_RELEASE "/MT")
 set(CMAKE_BUILD_TYPE "Release")
 
 add_library(nfd_common nfd/nfd_common.c)
 
-if (NFD_WIN)
+if (MSVC)
+	set(CMAKE_CXX_FLAGS_RELEASE "/MT")
+	set(CMAKE_C_FLAGS_RELEASE "/MT")
 	add_library(nfd nfd/nfd_win.cpp)
-else (NFD_WIN)
+endif (MSVC)
+
+if (UNIX)
+	set(CMAKE_CXX_FLAGS_RELEASE "-fPIC -m32")
+	set(CMAKE_C_FLAGS_RELEASE "-fPIC -m32")
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
+	include_directories(${GTK3_INCLUDE_DIRS})
+	link_directories(${GTK3_LIBRARY_DIRS})
+	add_definitions(${GTK3_CFLAGS_OTHER})
 	add_library(nfd nfd/nfd_gtk.c)
-endif (NFD_WIN)
+	target_link_libraries(nfd ${GTK3_LIBRARIES})
+endif (UNIX)
 
 target_link_libraries(nfd nfd_common)
 
